@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% block content %}
+<h1>My Posts</h1>
+<h2>{% if id %} Edit {% else %} NEW {% endif %} Post</h2>
+<form method="post" novalidate>
+    {% csrf_token %}    <!-- 위조방지 -->
+    {{ form.as_p }}
+<!--    <p>-->
+<!--        <label>-->
+<!--            title-->
+<!--        </label>-->
+<!--        <input type="text" class="post-form">-->
+<!--        <label>-->
+<!--            content-->
+<!--        </label>-->
+<!--        <input type="text" class="post-form">-->
+<!--        <label>-->
+<!--            published_at-->
+<!--        </label>-->
+<!--        <input type="text" class="post-form">-->
+<!--        <label>-->
+<!--            author-->
+<!--        </label>-->
+<!--        <input type="text" class="post-form">-->
+
+<!--    </p>-->
+
+    <input type="submit" value="Save" />
+</form>
+{% endblock %}

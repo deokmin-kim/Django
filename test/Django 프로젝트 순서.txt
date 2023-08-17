@@ -1,0 +1,217 @@
+장고 start -> 앱 만들기 -> 모델정의 -> 마이그레이션 -> 플래시 메세지
+    -> 장고 관리자 -> 장고 레이아웃 및 폼 양식 -> 템플릿 만들기
+    -> 편집 폼 양식 및 레이아웃 -> 삭제 폼 및 레이아웃 -> 로그인/로그아웃
+=============================================
+장고 클래스 기반
+listview 목록표시 -> listview 목록 세부 표시 -> update view
+    -> CreateView 폼 만들기 -> FormView 폼 등록하기 -> LiginView
+    암호재설정 활성화, 사용자 프로필 추가
+==============================================
+ Django 프로젝트 순서
+
+1. 프로젝트 작성 : django-admin startproject yourprojectname학습을 사용하여 새 프로젝트를 시작(관리자권한)
+
+2. 앱 생성 : python manage.py startapp yourappname학습을 이용하여 웹사이트의 구성 요소(예: 블로그, 갤러리 등)를 대표하는 앱을 생성
+
+3. 모델 정의 : 앱의 models.py파일에서 데이터베이스 테이블을 정의
+
+4. 보기(view)와 템플릿 작성 : 검토를 통해 로직을 처리하고 템플릿을 사용하여 사용자에게 보여주기 HTML을 작성
+
+5. URL 설정 : urls.py파일에서 URL 패턴을 정의하여 보기(view)와 연결
+
+6. 데이터베이스 카탈로그 : python manage.py makemigrations과 python manage.py migrate 사용하여 모델 변경 사항을 데이터베이스에 적용
+
+7. 정적 및 미디어 파일 관리 : CSS, JavaScript, 이미지 등의 정적 파일을 관리하고 설정
+
+8. 개발 서버 실행 : python manage.py runserver기반으로 개발 서버를 실행하고 웹사이트 확인
+
+9. 배포 : 웹사이트가 준비되어 있는 호스팅 서비스에 포함하여 인터넷에 배포를 공개
+
+======================================================
+<< 모델 정의 -> 마이그레이션 >>
+//
+'django-admin'의 db관련 명령어
+makemigrations  -> db 새로생성
+migrate         -> 생성된 db에 테이블 수정
+sqlflush
+sqlmigrate      -sql미리보기 -> 쿼리출력
+sqlsequencereset
+//
+모델을 변경하고 마이그레이션을 생성(db)하고 변경 사항을 데이터베이스에 적용하는 프로세스
+1. 새 모델을 정의하거나 기존 모델을 변경 (새로운 테이블을 생성하거나 수정할 때)
+2. 명령을 실행하여 새 마이그레이션을 수행 makemigrations. (새로운 데이터베이스 생성)
+3. 명령을 실행하여 모델의 변경 사항을 데이터베이스에 적용  migrate (테이블 생성, 수정 -> 기존 DB)
+ ex) 모델정의
+  blog.models.py -> django.db.medels.Model의 하위클래스 및 필드가 명시되어야 한다.
+  - 상속해서 클래스를 생성/ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+  - __str__ 문자열 표현 재정의 메소드
+  - class Meta 구성
+ ex) 내장 모델과 함께 사용한다. 참조키를 생성했다.
+    from django.contrib.auth.models import User
+
+
+<실습1> 새 마이그레이션 생성
+python manage.py makemigrations
+
+=>
+(venv) PS C:\pyweb\mysite> python manage.py makemigrations
+System check identified some issues:
+
+WARNINGS:
+blog.Post.published_at: (fields.W161) Fixed default value provided.
+        HINT: It seems you set a fixed date / time / datetime value as default for this field. This may not be what you want. If you want to have the c
+urrent date as default, use `django.utils.timezone.now`
+Migrations for 'blog':
+  blog\migrations\0001_initial.py
+    - Create model Post
+
+<실습2>
+python manage.py sqlmigrate blog 0001
+
+=>
+(venv) PS C:\pyweb\mysite> python manage.py sqlmigrate blog 0001
+System check identified some issues:
+
+WARNINGS:
+blog.Post.published_at: (fields.W161) Fixed default value provided.
+        HINT: It seems you set a fixed date / time / datetime value as default for this field. This may not be what you want. If you want to have the c
+urrent date as default, use `django.utils.timezone.now`
+BEGIN;
+--
+-- Create model Post
+--
+CREATE TABLE "blog_post" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "title" varchar(120) NOT NULL, "content" text NOT NULL, "published_at" datet
+ime NOT NULL, "author_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE INDEX "blog_post_author_id_dd7a8485" ON "blog_post" ("author_id");
+COMMIT;
+
+<실습3> 변경사항을 데이터베이스에 적용
+python manage.py migrate
+
+=>
+(venv) PS C:\pyweb\mysite> python manage.py migrate
+System check identified some issues:
+
+WARNINGS:
+blog.Post.published_at: (fields.W161) Fixed default value provided.
+        HINT: It seems you set a fixed date / time / datetime value as default for this field. This may not be what you want. If you want to have the c
+urrent date as default, use `django.utils.timezone.now`
+Operations to perform:
+  Apply all migrations: admin, auth, blog, contenttypes, sessions
+Running migrations:
+  Applying blog.0001_initial... OK
+
+<실습4> 프로젝트에서 해당 마이그레이션의 상태를 나열해보자.
+python manage.py showmigrations
+
+
+" no changes detected "
+ => 모델변경 X ( 세션, 브라우저 관여) => 앱이 지정되지 않았다. python manage.py makemigrations 앱이름
+ => INSTALLED_APPS에 등록된 앱이 인식하지 못할 경우
+ => 마이그레이션 파일이 이미 있다.
+ => 모델 정의 오류
+ => 수동 삭제 할 경우
+
+ ===================================
+ 장고 관리자
+ - 관리자 페이지에 모델을 표시하려면 admin.py에 Post(Model) 속성값을 추가해야 한다.
+ 1) admin.site.register(Post) 테이블 등록
+ 2) http://127.0.0.1:8000/admin 으로 접속해서 blog/post 확인 후 게시물 몇 개 등록
+ 3) 등록된 게시물을 표시한다.  blog.views.py
+ 4) settings.py -> TEMPLATES = [ 'DIRS': [BASE_DIR/'templates'], ] 추가
+
+======================================
+장고 레이아웃 및 폼양식 :   django.forms.Form 클래스 상속, django.forms.ModelForm
+1) 앱디렉토리 / blog.forms.py 파일생ㅅ어
+2) django.forms.ModelForm 임포트
+3) class PostForm(ModelForm) : class Meta: 클래스를 생성
+4) PostForm 경로를 url_pattern에 등록
+    path('post/create', views.create_post, name ="post-create"),
+5) create_post()함수를 통해 코드를 작성
+
+==========================================
+[ -> 편집 폼 및 레이아웃 -> 삭제 폼 레이아웃 ->]
+1) url 패턴만들고 view.py 함수를 만든다. (Model -> View    >[forms.py] ->template)
+2) html 템플릿 구성을 한다. ( Template )
+
+<<실습>>
+1. urls.py에 가서 urlpatterns=[ path('post/edit/<int:id>', views.edit_post, name='post_edit),,,    ] 추가
+2. urls.py에 가서 urlpatterns=[ path('post/delete/<int:id>', views.delete_post, name='post_delete),,,    ] 추가
+3. 'blog/post_form.html' 의 데이터를 수정한다. ID값 추가 수정
+    <h2>{% if id %} Edit {% else %} NEW {% endif %} Post</h2>
+4. home.html 각 게시물에 편집(EDIT) 링크를 포함하도록 템플릿을 수정
+   home.html 각 게시물에 삭제(DELETE) 링크를 포함하도록 템플릿을 수정
+    <p> <a href = '{% url 'post_edit' post.id %}' > EDIT </a></p>
+    <p> <a href = '{% url 'post_delete' post.id %}' > DELETE </a></p>
+5. <a> 태그를 통해 get 방식으로 id값을 넘겨서 페이지 랜더링 한 것을 확인하자
+     GET 방식으로 id값은 링크 된 url로 넘어가는 것 확인 후 내용 변경한 다음 save버튼을 클릭할 때
+     POST 방식으로 업데이트 되지 않는다.
+6. POST 방식의 코드를 추가한다.   views.edit_post : GET   / POST
+7. message를 선언하고 활용한다. 각 메세지가 적용되는 views.py 함수에 모듈 추가 후 코드작성
+from django.contrib import messages
+
+8. base.html에 https://docs.djangoproject.com/en/4.2/ref/contrib/messages/ 에 있는 코드를 활용
+
+9. delete 랜더링 한다.   views.delete_post   GET   / POST
+
+================================================================
+로그인 / 로그아웃(console)     https://docs.djangoproject.com/en/4.2/topics/auth/default/
+python manage.py shell
+
+from django.contrib.auth.models import User     #https://docs.djangoproject.com/en/4.2/ref/contrib/auth/#django.contrib.auth.models.User
+user = User.objects.create_user('test', 'test01@example.com', 'testtest')
+#user.is_superuser = True
+user.is_staff = True
+user.save()
+
+===============================내장 DB 내용을 확인하고 싶다면(console)
+import sqlite3
+conn = sqlite3.connect('db.sqlite3')
+conn.cursor()
+cursor.execute("SELSECT name FROM sqlite_master WHERE type='table';")
+tables = cursor.fetchall()..
+================================
+python manage.py dbshell -> console에서 sqlite 볼 수 있다.-> 전역패스 설정 필요
+
+============================================
+<< 사용자 가입 화면 등록 >>
+1. from django.contrib.auth.forms import UserCreationForm 의 클래스를 임포트하고 상속받는다.
+    form.py
+2. urls.py 매핑, views.py 코드작성
+
+3. def sign_up(request) : get/post(조건지정 저장)
+
+4. register.html : error 필드 체크  / base.html :    register링크 추가
+
+5. 사용자가 다른사용자가 작성된 내용을 수정, 삭제 못하게 하고 싶다.    blog.views.py
+    https://docs.djangoproject.com/en/4.2/topics/auth/default/#the-login-required-decorator
+
+    ->from django.contrib.auth.decorators import login_required
+    @login_required 수정, 삭제 함수 위에 선언하고 404요청지정함수 추가
+
+6.home.html : 수정, 삭제 링크를 숨기고 싶다.
+
+
+https://docs.djangoproject.com/en/4.2/intro/reusable-apps/
+https://docs.djangoproject.com/en/4.2/intro/contributing/
+
+
+==========================================================
+<< 자료 관리 >>
+dumpdata(json, xml, yaml)    / loaddata
+
+<< 실습 >>    data.json   -> 모델명, 기본키값, 모델 필드
+python manage.py dumpdata   > data.json
+
+<< 실습 >> 다른 확장자를 가진 파일로 내보내기 할 때 --format 지정한다. https://docs.djangoproject.com/en/4.2/topics/serialization/#serialization-formats
+python manage.py dumpdata   > filename --format file_format
+ex) python manage.py dumpdata   > data.xml --format xml
+
+<< 실습 >> 특정 앱에서 데이터를 내보내기
+python manage.py dumpdata 앱이름 > filename.json
+ex) python manage.py dumpdata blog > blog.json
+    python manage.py dumpdata blog.Post > Post.json
+
+<< 데이터 업로드 >>
+<< 실습 >> 데이터 업로드 할 때는 폴더 명이 반드시 존재
+python manage.py loaddata data.json (fixture 디렉토리 settings에 반드시 명시 ->#FIXTURE_DIRS=['/blog/fixtures/', , , ])
